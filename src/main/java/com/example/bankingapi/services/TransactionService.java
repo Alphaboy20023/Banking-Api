@@ -1,11 +1,11 @@
-package com.example.BankingApi.services;
+package com.example.bankingapi.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.BankingApi.Repositories.TransactionRepository;
-import com.example.BankingApi.models.TransactionModel;
-import com.example.BankingApi.models.AccountModel;
+import com.example.bankingapi.Repositories.TransactionRepository;
+import com.example.bankingapi.models.TransactionModel;
+import com.example.bankingapi.models.AccountModel;
 
 import java.math.BigDecimal;
 

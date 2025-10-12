@@ -1,4 +1,4 @@
-package com.example.BankingApi.controllers;
+package com.example.bankingapi.controllers;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -7,12 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.BankingApi.Repositories.UserRepository;
-import com.example.BankingApi.dto.TransferRequest;
-import com.example.BankingApi.models.AccountModel;
-import com.example.BankingApi.models.UserModel;
-import com.example.BankingApi.models.AccountModel.AccountType;
-import com.example.BankingApi.services.AccountService;
+import com.example.bankingapi.Repositories.UserRepository;
+import com.example.bankingapi.dto.TransferRequest;
+import com.example.bankingapi.models.AccountModel;
+import com.example.bankingapi.models.UserModel;
+import com.example.bankingapi.models.AccountModel.AccountType;
+import com.example.bankingapi.services.AccountService;
 
 @RestController
 @RequestMapping("/api/accounts")

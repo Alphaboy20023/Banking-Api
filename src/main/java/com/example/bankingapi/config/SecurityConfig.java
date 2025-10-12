@@ -1,4 +1,4 @@
-package com.example.BankingApi.config;
+package com.example.bankingapi.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

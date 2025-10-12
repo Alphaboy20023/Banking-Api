@@ -1,11 +1,11 @@
-package com.example.BankingApi.controllers;
+package com.example.bankingapi.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
-import com.example.BankingApi.Repositories.TransactionRepository;
-import com.example.BankingApi.models.TransactionModel;
+import com.example.bankingapi.Repositories.TransactionRepository;
+import com.example.bankingapi.models.TransactionModel;
 
 @RestController
 @RequestMapping("/api/transactions")

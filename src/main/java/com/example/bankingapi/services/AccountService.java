@@ -1,4 +1,4 @@
-package com.example.BankingApi.services;
+package com.example.bankingapi.services;
 
 import java.math.BigDecimal;
 import java.util.Random;
@@ -6,8 +6,8 @@ import java.util.Random;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.BankingApi.Repositories.AccountRepository;
-import com.example.BankingApi.models.AccountModel;
+import com.example.bankingapi.Repositories.AccountRepository;
+import com.example.bankingapi.models.AccountModel;
 
 // ALL ACCOUNT CRUD
 @Service

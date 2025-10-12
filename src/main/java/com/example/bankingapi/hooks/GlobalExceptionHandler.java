@@ -1,4 +1,4 @@
-package com.example.BankingApi.hooks;
+package com.example.bankingapi.hooks;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

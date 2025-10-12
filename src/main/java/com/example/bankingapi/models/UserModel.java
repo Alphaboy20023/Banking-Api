@@ -1,4 +1,4 @@
-package com.example.BankingApi.models;
+package com.example.bankingapi.models;
 
 import jakarta.persistence.*;
 
