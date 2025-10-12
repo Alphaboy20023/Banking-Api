@@ -1,0 +1,159 @@
+package com.example.BankingApi.controllers;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
+
+//  mvn spring-boot:run
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.BankingApi.models.AccountModel;
+import com.example.BankingApi.models.AccountModel.AccountType;
+import com.example.BankingApi.models.UserModel;
+
+import com.example.BankingApi.services.AccountService;
+
+import jakarta.validation.Valid;
+
+// import com.example.BankingApi.Repositories.AccountRepository;
+import com.example.BankingApi.Repositories.UserRepository;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    // @Autowired
+    // private AccountRepository accountRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AccountService accountService;
+
+    @PostMapping
+    public ResponseEntity<?> createUser(@RequestBody @Valid UserModel user) {
+        try {
+            if (user.getRole() == null) {
+                user.setRole(UserModel.Role.USER);
+            }
+
+            if (userRepository.existsByEmail(user.getEmail())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("Error", "Email already exists"));
+            }
+
+            if (user.getPassword().length() < 8) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("Error", "password cannot be less than 8 characters"));
+            }
+
+            // encode password
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+            // generate account Number
+            AccountModel account = new AccountModel();
+            account.setAccountNumber(accountService.generateAccountNumber()); // generate acct no
+            account.setBalance(BigDecimal.valueOf(5_000.00));
+            account.setAccountType(AccountType.SAVINGS);
+
+            // link user to account
+            user.setAccount(account);
+
+            // save
+            UserModel savedUser = userRepository.save(user);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("user", savedUser);
+            response.put("message", "User Created successfully");
+
+            return ResponseEntity
+                    .status(201)
+                    .body(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error creating user: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<?> getUserbyEmail(@PathVariable String email) {
+        Optional<UserModel> user = userRepository.findByEmail(email);
+
+        if (user.isEmpty()) {
+            return ResponseEntity
+                    .status(404)
+                    .body("User not found");
+        }
+
+        return ResponseEntity.ok(user.get());
+    }
+
+    // get by id
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        return userRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(404).body(null));
+    }
+
+    // get all
+    @GetMapping
+    public List<UserModel> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    // update user
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UserModel updatedUser) {
+        Optional<UserModel> existingUserOpt = userRepository.findById(id);
+
+        if (!existingUserOpt.isPresent()) {
+            return ResponseEntity
+                    .status(404)
+                    .body("User not found");
+        }
+
+        UserModel existingUser = existingUserOpt.get();
+        existingUser.setEmail(updatedUser.getEmail());
+        existingUser.setUsername(updatedUser.getUsername());
+        existingUser.setRole(updatedUser.getRole());
+
+        userRepository.save(existingUser);
+        return ResponseEntity.ok(existingUser);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+
+        Optional<UserModel> existingUserOpt = userRepository.findById(id);
+        if (!existingUserOpt.isPresent()) {
+            return ResponseEntity
+                    .status(404)
+                    .body("User not found");
+        }
+
+        userRepository.delete(existingUserOpt.get());
+        return ResponseEntity.ok("User deleted successfully");
+
+    }
+}
