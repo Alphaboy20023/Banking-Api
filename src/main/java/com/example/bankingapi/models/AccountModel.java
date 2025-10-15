@@ -5,14 +5,16 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 // import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name  = "accounts")
+@Table(name = "accounts")
 public class AccountModel {
 
     @Id
@@ -22,6 +24,11 @@ public class AccountModel {
     @Column(nullable = false, unique = true)
     @NotBlank
     private String accountNumber;
+
+    @Column
+    @Size(min = 4)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String pin;
 
     @Column(nullable = false)
     @PositiveOrZero
@@ -50,12 +57,14 @@ public class AccountModel {
     // private List<TransactionModel> transactions;
 
     // contstructors
-    public AccountModel() {}
+    public AccountModel() {
+    }
 
-    public AccountModel(String accountNumber, AccountType accountType, UserModel user) {
+    public AccountModel(String accountNumber, AccountType accountType, UserModel user, String pin) {
         this.accountNumber = accountNumber;
         this.accountType = accountType;
         this.user = user;
+        setPin(pin);
     }
 
     @PrePersist
@@ -76,6 +85,10 @@ public class AccountModel {
         return balance;
     }
 
+    public String getPin() {
+        return pin;
+    }
+
     public AccountType getAccountType() {
         return accountType;
     }
@@ -89,7 +102,7 @@ public class AccountModel {
     }
 
     // public List<TransactionModel> getTransactions() {
-    //     return transactions;
+    // return transactions;
     // }
 
     // setters
@@ -112,8 +125,12 @@ public class AccountModel {
         }
     }
 
+    public void setPin(String pin) {
+        this.pin = pin;
+    }
+
     // public void setTransactions(List<TransactionModel> transactions) {
-    //     this.transactions = transactions;
+    // this.transactions = transactions;
     // }
 
 }

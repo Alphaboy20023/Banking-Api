@@ -32,8 +32,7 @@ public class UserModel {
     @Column
     private String username;
 
-    @Column
-    private String pin;
+   
 
     public enum Role {
         ADMIN,
@@ -57,11 +56,10 @@ public class UserModel {
     @JsonManagedReference
     private AccountModel account;
 
-    public UserModel(String email, String password, String username, String pin, Role role) {
+    public UserModel(String email, String password, String username, Role role) {
         this.email = email;
         setPassword(password);
         this.username = username;
-        this.pin = pin;
         this.role = role;
     }
 
@@ -108,10 +106,6 @@ public class UserModel {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public void setPin(String pin) {
-        this.pin = pin;
     }
 
     public void setUsername(String username) {

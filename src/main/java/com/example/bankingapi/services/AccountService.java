@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.bankingapi.Repositories.AccountRepository;
@@ -18,6 +19,10 @@ public class AccountService {
 
     @Autowired
     private TransactionService transactionService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
 
     private final Object lock = new Object();
 
@@ -63,7 +68,7 @@ public class AccountService {
         account.setBalance(account.getBalance().subtract(amount));
 
         AccountModel saved = accountRepository.save(account);
-        transactionService.recordWithdrawal(saved, amount); 
+        transactionService.recordWithdrawal(saved, amount);
         return saved;
     }
 
@@ -86,10 +91,37 @@ public class AccountService {
         fromAccount.setBalance(fromAccount.getBalance().subtract(amount));
         toAccount.setBalance(toAccount.getBalance().add(amount));
 
-       
         accountRepository.save(fromAccount);
         accountRepository.save(toAccount);
 
         transactionService.recordTransfer(fromAccount, toAccount, amount);
     }
+
+    public void setPin(String accountNumber, String pin) {
+        AccountModel account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        if (pin.length() != 4) {
+            throw new RuntimeException("PIN must be 4 digits.");
+        }
+
+        // hash pin
+        account.setPin(passwordEncoder.encode(pin));
+        accountRepository.save(account);
+    }
+
+    public boolean validatePin(String accountNumber, String inputPin) {
+        AccountModel account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        // Compare entered PIN with stored PIN
+        return passwordEncoder.matches(inputPin, account.getPin());
+    }
+
+    public String getUsernameByAccountNumber(String accountNumber) {
+        AccountModel account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new RuntimeException("Account not found for number: " + accountNumber));
+        return account.getUser().getUsername();
+    }
+
 }

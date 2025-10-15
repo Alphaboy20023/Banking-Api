@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -92,6 +93,47 @@ public class UserController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error creating user: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody @Valid UserModel user) {
+        try {
+            // Check email
+            Optional<UserModel> existingUserOpt = userRepository.findByEmail(user.getEmail());
+            if (existingUserOpt.isEmpty()) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("error", "Email does not exist"));
+            }
+
+            UserModel existingUser = existingUserOpt.get();
+
+            if (user.getPassword() == null || user.getPassword().isEmpty()) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("error", "Password is required"));
+            }
+
+            if (user.getPassword().length() < 8) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(Map.of("error", "Password cannot be less than 8 characters"));
+            }
+
+            // compare new to old
+            if (!passwordEncoder.matches(user.getPassword(), existingUser.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Incorrect password"));
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Login successful",
+                    "username", existingUser.getUsername()));
+
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "An error occurred during login"));
         }
     }
 

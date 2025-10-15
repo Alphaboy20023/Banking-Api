@@ -6,6 +6,7 @@ public class TransferRequest {
     private String fromAccountNumber;
     private String toAccountNumber;
     private BigDecimal amount;
+    private String pin;
 
     // Getters and Setters
     public String getFromAccountNumber() {
@@ -27,5 +28,13 @@ public class TransferRequest {
     }
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public String getPin() { 
+        return pin;
+    }
+
+    public void setPin(String pin) { 
+        this.pin = pin;
     }
 }
