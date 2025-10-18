@@ -26,6 +26,7 @@ import jakarta.validation.Valid;
 
 // import com.example.BankingApi.Repositories.AccountRepository;
 import com.example.bankingapi.Repositories.UserRepository;
+import com.example.bankingapi.config.JwtUtil;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -48,6 +49,9 @@ public class UserController {
 
     @Autowired
     private AccountService accountService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody @Valid UserModel user) {
@@ -83,9 +87,12 @@ public class UserController {
             // save
             UserModel savedUser = userRepository.save(user);
 
+            String token = jwtUtil.generateToken(savedUser.getEmail());
+
             Map<String, Object> response = new HashMap<>();
             response.put("user", savedUser);
             response.put("message", "User Created successfully");
+            response.put("token", token);
 
             return ResponseEntity
                     .status(201)
@@ -126,9 +133,13 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Incorrect password"));
             }
 
+            String token = jwtUtil.generateToken(existingUser.getUsername());
+
             return ResponseEntity.ok(Map.of(
                     "message", "Login successful",
-                    "username", existingUser.getUsername()));
+                    "username", existingUser.getUsername(),
+                    "token", token
+                    ));
 
         } catch (Exception e) {
             return ResponseEntity

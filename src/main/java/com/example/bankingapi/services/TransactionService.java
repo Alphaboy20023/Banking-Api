@@ -15,7 +15,7 @@ public class TransactionService {
     @Autowired
     private TransactionRepository transactionRepository;
 
-    // 🧾 Record a DEPOSIT transaction
+    // Record a DEPOSIT transaction
     public void recordDeposit(AccountModel account, BigDecimal amount) {
         TransactionModel tx = new TransactionModel();
         tx.setTransactionType(TransactionModel.TransactionType.DEPOSIT);

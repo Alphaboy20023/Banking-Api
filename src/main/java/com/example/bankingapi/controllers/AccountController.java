@@ -1,6 +1,8 @@
 package com.example.bankingapi.controllers;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,15 +54,38 @@ public class AccountController {
     }
 
     // Deposit endpoint
-    @PostMapping("/{accountNumber}/deposit")
-    public AccountModel deposit(@PathVariable String accountNumber, @RequestParam BigDecimal amount) {
-        return accountService.deposit(accountNumber, amount);
+    @PostMapping("/deposit")
+    public ResponseEntity<Map<String, Object>> deposit(@RequestBody Map<String, Object> request) {
+        String accountNumber = (String) request.get("accountNumber");
+        BigDecimal amount = new BigDecimal(request.get("amount").toString());
+
+        AccountModel updatedAccount = accountService.deposit(accountNumber, amount);
+
+        BigDecimal newBalance = updatedAccount.getBalance();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Deposit of " + amount + " to account " + accountNumber + " was successful.");
+        response.put("newBalance", newBalance);
+        response.put("accountNumber", accountNumber);
+
+        return ResponseEntity.ok(response);
     }
 
-    // Withdraw endpoint
-    @PostMapping("/{accountNumber}/withdraw")
-    public AccountModel withdraw(@PathVariable String accountNumber, @RequestParam BigDecimal amount) {
-        return accountService.withdraw(accountNumber, amount);
+    @PostMapping("/withdraw")
+    public ResponseEntity<Map<String, Object>> withdraw(@RequestBody Map<String, Object> request) {
+        String accountNumber = (String) request.get("accountNumber");
+        BigDecimal amount = new BigDecimal(request.get("amount").toString());
+
+        AccountModel updatedAccount = accountService.deposit(accountNumber, amount);
+
+        BigDecimal newBalance = updatedAccount.getBalance();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Deposit of " + amount + " to account " + accountNumber + " was successful.");
+        response.put("newBalance", newBalance);
+        response.put("accountNumber", accountNumber);
+
+        return ResponseEntity.ok(response);
     }
 
     // Transfer endpoint
@@ -101,8 +126,8 @@ public class AccountController {
 
 // to test api/accounts/transfer, use payload:
 // {
-//     "fromAccountNumber":1411613301,
-//     "toAccountNumber":1422197261,
-//     "pin":"4646",
-//     "amount":"800"
+// "fromAccountNumber":1411613301,
+// "toAccountNumber":1422197261,
+// "pin":"4646",
+// "amount":"800"
 // }
