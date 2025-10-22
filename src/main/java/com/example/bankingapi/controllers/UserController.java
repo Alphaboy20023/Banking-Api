@@ -15,12 +15,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.bankingapi.models.AccountModel;
 import com.example.bankingapi.models.AccountModel.AccountType;
 import com.example.bankingapi.models.UserModel;
 
 import com.example.bankingapi.services.AccountService;
+import com.example.bankingapi.services.CardService;
 
 import jakarta.validation.Valid;
 
@@ -29,6 +31,7 @@ import com.example.bankingapi.Repositories.UserRepository;
 import com.example.bankingapi.config.JwtUtil;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -52,6 +55,9 @@ public class UserController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private CardService cardService;
 
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody @Valid UserModel user) {
@@ -87,7 +93,10 @@ public class UserController {
             // save
             UserModel savedUser = userRepository.save(user);
 
-            String token = jwtUtil.generateToken(savedUser.getEmail());
+            // create card
+            cardService.createCardForAccount(account);
+
+            String token = jwtUtil.generateToken(user.getEmail(), user.getAccount().getAccountNumber());
 
             Map<String, Object> response = new HashMap<>();
             response.put("user", savedUser);
@@ -133,13 +142,12 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Incorrect password"));
             }
 
-            String token = jwtUtil.generateToken(existingUser.getUsername());
+            String token = jwtUtil.generateToken(user.getEmail(), user.getAccount().getAccountNumber());
 
             return ResponseEntity.ok(Map.of(
                     "message", "Login successful",
                     "username", existingUser.getUsername(),
-                    "token", token
-                    ));
+                    "token", token));
 
         } catch (Exception e) {
             return ResponseEntity
@@ -171,8 +179,19 @@ public class UserController {
 
     // get all
     @GetMapping
-    public List<UserModel> getAllUsers() {
-        return userRepository.findAll();
+    public ResponseEntity<?> getAllUsers(Principal principal) {
+
+        UserModel currentUser = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (!"ADMIN".equalsIgnoreCase(currentUser.getRole().name())) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Access denied");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+
+        List<UserModel> allUsers = userRepository.findAll();
+        return ResponseEntity.ok(allUsers);
     }
 
     // update user
@@ -190,19 +209,30 @@ public class UserController {
         existingUser.setEmail(updatedUser.getEmail());
         existingUser.setUsername(updatedUser.getUsername());
         existingUser.setRole(updatedUser.getRole());
+        // jwtUtil.generateToken(existingUser.getEmail(),
+        // existingUser.getAccount().getAccountNumber());
 
         userRepository.save(existingUser);
         return ResponseEntity.ok(existingUser);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Long id, Principal principal) {
 
         Optional<UserModel> existingUserOpt = userRepository.findById(id);
+        UserModel currentUser = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
         if (!existingUserOpt.isPresent()) {
             return ResponseEntity
                     .status(404)
                     .body("User not found");
+        }
+
+        if (!"ADMIN".equalsIgnoreCase(currentUser.getRole().name())) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Access denied");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
 
         userRepository.delete(existingUserOpt.get());

@@ -11,12 +11,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.bankingapi.Repositories.UserRepository;
+import com.example.bankingapi.Repositories.AccountRepository;
+
 import com.example.bankingapi.dto.SetPinRequest;
 import com.example.bankingapi.dto.TransferRequest;
 import com.example.bankingapi.models.AccountModel;
 import com.example.bankingapi.models.UserModel;
 import com.example.bankingapi.models.AccountModel.AccountType;
 import com.example.bankingapi.services.AccountService;
+import com.example.bankingapi.services.CardService;
+
+import com.example.bankingapi.config.JwtUtil;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -27,6 +32,19 @@ public class AccountController {
 
     @Autowired
     private AccountService accountService;
+
+    @Autowired
+    private CardService cardService;
+
+    private final JwtUtil jwtUtil;
+    private final AccountRepository accountRepository;
+
+    public AccountController(JwtUtil jwtUtil, AccountRepository accountRepository,
+            AccountService accountService) {
+        this.jwtUtil = jwtUtil;
+        this.accountRepository = accountRepository;
+        this.accountService = accountService;
+    }
 
     // Create account for user
     @PostMapping("/create/{userId}")
@@ -73,47 +91,57 @@ public class AccountController {
 
     @PostMapping("/withdraw")
     public ResponseEntity<Map<String, Object>> withdraw(@RequestBody Map<String, Object> request) {
-        String accountNumber = (String) request.get("accountNumber");
-        BigDecimal amount = new BigDecimal(request.get("amount").toString());
+        try {
+            String cardNumber = (String) request.get("cardNumber");
+            String cvv = (String) request.get("cvv");
+            String pin = (String) request.get("pin");
+            BigDecimal amount = new BigDecimal(request.get("amount").toString());
+            String accountNumber = (String) request.get("accountNumber");
 
-        AccountModel updatedAccount = accountService.deposit(accountNumber, amount);
+            if (cardNumber == null || cvv == null || pin == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "error", "cardNumber, cvv, and pin are required for withdrawal"));
+            }
 
-        BigDecimal newBalance = updatedAccount.getBalance();
+            Map<String, Object> result = cardService.withdrawWithCard(accountNumber, cardNumber, cvv, pin, amount);
+            return ResponseEntity.ok(result);
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Deposit of " + amount + " to account " + accountNumber + " was successful.");
-        response.put("newBalance", newBalance);
-        response.put("accountNumber", accountNumber);
-
-        return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
     }
 
     // Transfer endpoint
     @PostMapping("/transfer")
-    public ResponseEntity<String> transfer(@RequestBody TransferRequest request) {
+    public ResponseEntity<String> transfer(@RequestBody TransferRequest request,
+            @RequestHeader("Authorization") String token) {
+        try {
+            boolean validPin = accountService.validatePin(request.getFromAccountNumber(), request.getPin());
+            if (!validPin) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid PIN. Transaction denied.");
+            }
 
-        boolean validPin = accountService.validatePin(request.getFromAccountNumber(), request.getPin());
-        if (!validPin) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid PIN. Transaction denied.");
+            accountService.transfer(
+                    request.getFromAccountNumber(),
+                    request.getToAccountNumber(),
+                    request.getAmount());
+
+            String userA = accountService.getUsernameByAccountNumber(request.getFromAccountNumber());
+            String userB = accountService.getUsernameByAccountNumber(request.getToAccountNumber());
+
+            String message = "Dear " + userA + ", your transfer of "
+                    + request.getAmount() + " to account "
+                    + request.getToAccountNumber() + ", " + userB + " was successful.";
+
+            return ResponseEntity.ok(message);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
-
-        accountService.transfer(
-                request.getFromAccountNumber(),
-                request.getToAccountNumber(),
-                request.getAmount());
-
-        String userA = accountService.getUsernameByAccountNumber(request.getFromAccountNumber());
-        String userB = accountService.getUsernameByAccountNumber(request.getToAccountNumber());
-
-        String message = "Dear " + userA + ", your transfer of "
-                + request.getAmount() + " to account "
-                + request.getToAccountNumber() + ", " + userB + " was successful.";
-
-        return ResponseEntity.ok(message);
     }
 
     @PostMapping("/set-pin")
-    public ResponseEntity<String> setPin(@RequestBody SetPinRequest request) {
+    public ResponseEntity<String> setPin(@RequestBody SetPinRequest request,
+            @RequestHeader("Authorization") String token) {
         try {
             accountService.setPin(request.getAccountNumber(), request.getPin());
             return ResponseEntity.ok("PIN set successfully.");
@@ -121,6 +149,17 @@ public class AccountController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+
+    // @PutMapping("/set-pin")
+    // public ResponseEntity<String> setPin(@RequestBody SetPinRequest request,
+    //         @RequestHeader("Authorization") String token) {
+    //     try {
+    //         accountService.setPin(request.getAccountNumber(), request.getPin());
+    //         return ResponseEntity.ok("PIN set successfully.");
+    //     } catch (RuntimeException e) {
+    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    //     }
+    // }
 
 }
 
@@ -131,3 +170,4 @@ public class AccountController {
 // "pin":"4646",
 // "amount":"800"
 // }
+

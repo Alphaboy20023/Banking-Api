@@ -22,7 +22,7 @@ public class SecurityConfig {
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final CustomAuthEntryPointHandler authEntryPointHandler;
 
-    public SecurityConfig(JwtFilter jwtFilter, CustomAccessDeniedHandler accessDeniedHandler,
+    public SecurityConfig(JwtFilter jwtFilter,CustomAccessDeniedHandler accessDeniedHandler,
                           CustomAuthEntryPointHandler authEntryPointHandler) {
         this.jwtFilter = jwtFilter;
         this.accessDeniedHandler = accessDeniedHandler;
@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }

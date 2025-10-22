@@ -20,7 +20,8 @@ public class TransactionModel {
         WITHDRAWAL,
         TRANSFER,
         DEBIT,
-        CREDIT
+        CREDIT,
+        CARD_WITHDRAWAL
     };
 
     @NotNull(message = "Transaction type is required")

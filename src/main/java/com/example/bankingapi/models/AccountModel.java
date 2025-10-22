@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
@@ -34,6 +35,13 @@ public class AccountModel {
     @PositiveOrZero
     private BigDecimal balance;
 
+    @Column(nullable = true, precision = 19, scale = 2)
+    // precision here is saying the max aamount of money, i.e the standard, up to 19
+    // digits,
+    // scale means decimal after, i.e 2
+    @PositiveOrZero
+    private BigDecimal dailyLimit = new BigDecimal("10000.00");
+
     public enum AccountType {
         SAVINGS,
         CURRENT,
@@ -53,11 +61,20 @@ public class AccountModel {
     @JsonBackReference
     private UserModel user;
 
+    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private CardModel card;
+
     // @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
     // private List<TransactionModel> transactions;
 
     // contstructors
     public AccountModel() {
+    }
+
+
+    public CardModel getCard() {
+        return card;
     }
 
     public AccountModel(String accountNumber, AccountType accountType, UserModel user, String pin) {
@@ -83,6 +100,10 @@ public class AccountModel {
 
     public BigDecimal getBalance() {
         return balance;
+    }
+
+    public BigDecimal getDailyLimit() {
+        return dailyLimit;
     }
 
     public String getPin() {
@@ -118,6 +139,10 @@ public class AccountModel {
         this.balance = balance;
     }
 
+    public void setDailyLimit(BigDecimal dailyLimit) {
+        this.dailyLimit = dailyLimit;
+    }
+
     public void setUser(UserModel user) {
         this.user = user;
         if (user != null && user.getAccount() != this) {
@@ -127,6 +152,10 @@ public class AccountModel {
 
     public void setPin(String pin) {
         this.pin = pin;
+    }
+
+    public void setCard(CardModel card) {
+        this.card = card;
     }
 
     // public void setTransactions(List<TransactionModel> transactions) {

@@ -27,44 +27,73 @@ public class TransactionController {
     @Autowired
     private UserRepository userRepository;
 
-    // all transactions
-    @GetMapping
+    // Get all transactions — ADMIN only
+    @GetMapping("/all")
     public ResponseEntity<?> getAllTransactions(Principal principal) {
-
         UserModel currentUser = userRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         if (!"ADMIN".equalsIgnoreCase(currentUser.getRole().name())) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("error", "Access denied");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Access denied."));
         }
 
-        // return [], if not transactions
-        List<TransactionModel> transactions = transactionRepository.findByFromAccountOrToAccount(null, null);
+        List<TransactionModel> transactions = transactionRepository.findAll();
 
         if (transactions.isEmpty()) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("transactions", Collections.emptyList());
-            response.put("message", "No transactions yet");
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(Map.of(
+                    "transactions", Collections.emptyList(),
+                    "message", "No transactions found"));
         }
 
-        // Otherwise return all transactions
-        return ResponseEntity.ok(transactions);
+        return ResponseEntity.ok(Map.of(
+                "transactions", transactions,
+                "count", transactions.size()));
     }
 
-    // Get transaction by ID
+    // Get transactions belonging to the logged-in user
+    @GetMapping
+    public ResponseEntity<?> getUserTransactions(Principal principal) {
+        UserModel currentUser = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        List<TransactionModel> userTransactions = transactionRepository
+                .findByFromAccountOrToAccount(currentUser.getAccount(), currentUser.getAccount());
+
+        if (userTransactions.isEmpty()) {
+            return ResponseEntity.ok(Map.of(
+                    "transactions", Collections.emptyList(),
+                    "message", "No transactions found for this user"));
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "transactions", userTransactions,
+                "count", userTransactions.size()));
+    }
+
+    // Get a single transaction by ID
     @GetMapping("/{id}")
-    public TransactionModel getTransactionById(@PathVariable Long id) {
-        return transactionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with id " + id));
+    public ResponseEntity<?> getTransactionById(@PathVariable Long id, Principal principal) {
+        UserModel currentUser = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        TransactionModel transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Transaction not found"));
+
+        // Only admin or owner can view this transaction
+        boolean isOwner = transaction.getFromAccount().equals(currentUser.getAccount()) ||
+                transaction.getToAccount().equals(currentUser.getAccount());
+
+        if (!"ADMIN".equalsIgnoreCase(currentUser.getRole().name()) && !isOwner) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Access denied. Not your transaction."));
+        }
+
+        return ResponseEntity.ok(transaction);
     }
 }
-
 
 // Daily limit (e.g., ₦100,000 max).
 // Flag suspicious activity (too many transfers in short time).
 // send transaction alert to both users
 // Redis?
-
