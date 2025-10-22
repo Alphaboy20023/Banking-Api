@@ -109,11 +109,13 @@ Response Examples
 
 ## API Endpoints
 
-# api/users/\*\* - controls all users CRUD activities.
+### api/users/\*\* - controls all users CRUD activities.
 
-# api/accounts/\*\* - controls all users account CRUD activities,.
+### api/accounts/\*\* - controls all users account CRUD activities,.
 
-# api/cards/\*\* - controls all users account card CRUD activities.
+### api/transactions/\*\* - controls all users transaction CRUD activities,.
+
+### api/cards/\*\* - controls all users account card CRUD activities.
 
 ## -- FOR USERS --
 
