@@ -3,7 +3,12 @@ package com.example.bankingapi.services;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +22,8 @@ import com.example.bankingapi.Repositories.TransactionRepository;
 
 import com.example.bankingapi.models.AccountModel;
 import com.example.bankingapi.models.CardModel;
+import com.example.bankingapi.models.TransactionModel;
+import com.example.bankingapi.services.EmailService;
 
 // ALL ACCOUNT CRUD
 @Service
@@ -33,6 +40,10 @@ public class AccountService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -126,7 +137,57 @@ public class AccountService {
         accountRepository.save(fromAccount);
         accountRepository.save(toAccount);
 
-        transactionService.recordTransfer(fromAccount, toAccount, amount);
+        TransactionModel transaction = transactionService.recordTransfer(fromAccount, toAccount, amount);
+        String transactionId = transaction.getTransactionId();
+
+        // format i.e 2000 -> 2,000
+        NumberFormat nf = NumberFormat.getNumberInstance(new Locale("en", "NG"));
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+
+        String formattedAmount = nf.format(amount);
+        String formattedSenderBalance = nf.format(fromAccount.getBalance());
+        String formattedReceiverBalance = nf.format(toAccount.getBalance());
+
+        try {
+            // Sender email
+            Map<String, Object> senderData = Map.of(
+                    "name", fromAccount.getUser().getUsername(),
+                    "transactionType", "sent",
+                    "direction", "from",
+                    "amount", formattedAmount,
+                    // "role","sender",
+                    "transactionId", transactionId,
+                    "date", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                    "balance", formattedSenderBalance);
+
+            emailService.sendHtmlMail(
+                    fromAccount.getUser().getEmail(),
+                    "Debit Alert - ₦" + formattedAmount,
+                    "transaction-success",
+                    senderData);
+
+            // Receiver email
+            Map<String, Object> receiverData = Map.of(
+                    "name", toAccount.getUser().getUsername(),
+                    "transactionType", "received",
+                    "direction", "into",
+                    "amount", formattedAmount,
+                    "role", "Sender",
+                    "getSenderName", fromAccount.getUser().getUsername(),
+                    "transactionId", transactionId,
+                    "date", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                    "balance", formattedReceiverBalance);
+
+            emailService.sendHtmlMail(
+                    toAccount.getUser().getEmail(),
+                    "Credit Alert - ₦" + formattedAmount,
+                    "transaction-success",
+                    receiverData);
+        } catch (Exception e) {
+            System.err.println("Transaction completed, but email failed: " + e.getMessage());
+        }
+
     }
 
     // Pin
@@ -137,7 +198,7 @@ public class AccountService {
         if (pin == null || pin.length() < 4 || pin.length() > 6) {
             throw new RuntimeException("PIN must be between 4 and 6 digits");
         }
-        
+
         // hash pin
         account.setPin(passwordEncoder.encode(pin));
         accountRepository.save(account);
@@ -163,5 +224,7 @@ public class AccountService {
                 .orElseThrow(() -> new RuntimeException("Account not found for number: " + accountNumber));
         return account.getUser().getUsername();
     }
+
+    
 
 }

@@ -8,6 +8,7 @@ import com.example.bankingapi.models.TransactionModel;
 import com.example.bankingapi.models.AccountModel;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Service
 public class TransactionService {
@@ -16,30 +17,38 @@ public class TransactionService {
     private TransactionRepository transactionRepository;
 
     // Record a DEPOSIT transaction
-    public void recordDeposit(AccountModel account, BigDecimal amount) {
+    public TransactionModel recordDeposit(AccountModel account, BigDecimal amount) {
         TransactionModel tx = new TransactionModel();
+        tx.setTransactionId(generateTransactionId());
         tx.setTransactionType(TransactionModel.TransactionType.DEPOSIT);
         tx.setAmount(amount);
         tx.setToAccount(account);
-        transactionRepository.save(tx);
+        return transactionRepository.save(tx); // return the saved transaction
     }
 
     // Record a WITHDRAWAL transaction
-    public void recordWithdrawal(AccountModel account, BigDecimal amount) {
+    public TransactionModel recordWithdrawal(AccountModel account, BigDecimal amount) {
         TransactionModel tx = new TransactionModel();
+        tx.setTransactionId(generateTransactionId());
         tx.setTransactionType(TransactionModel.TransactionType.WITHDRAWAL);
         tx.setAmount(amount);
         tx.setFromAccount(account);
-        transactionRepository.save(tx);
+        return transactionRepository.save(tx); 
     }
 
     // Record a TRANSFER transaction
-    public void recordTransfer(AccountModel fromAccount, AccountModel toAccount, BigDecimal amount) {
+    public TransactionModel recordTransfer(AccountModel fromAccount, AccountModel toAccount, BigDecimal amount) {
         TransactionModel tx = new TransactionModel();
+        tx.setTransactionId(generateTransactionId());
         tx.setTransactionType(TransactionModel.TransactionType.TRANSFER);
         tx.setAmount(amount);
         tx.setFromAccount(fromAccount);
         tx.setToAccount(toAccount);
-        transactionRepository.save(tx);
+        return transactionRepository.save(tx); // ← Return the saved transaction
+    }
+
+    private String generateTransactionId() {
+        String uuid = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
+        return "txn-" + uuid;
     }
 }

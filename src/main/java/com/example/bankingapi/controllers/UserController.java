@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -23,6 +24,7 @@ import com.example.bankingapi.models.UserModel;
 
 import com.example.bankingapi.services.AccountService;
 import com.example.bankingapi.services.CardService;
+import com.example.bankingapi.services.EmailService;
 
 import jakarta.validation.Valid;
 
@@ -31,6 +33,8 @@ import com.example.bankingapi.Repositories.UserRepository;
 import com.example.bankingapi.config.JwtUtil;
 
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,7 +42,7 @@ import java.util.Optional;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
 
     @Autowired
@@ -58,6 +62,9 @@ public class UserController {
 
     @Autowired
     private CardService cardService;
+
+    @Autowired
+    private EmailService emailService;
 
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody @Valid UserModel user) {
@@ -96,12 +103,28 @@ public class UserController {
             // create card
             cardService.createCardForAccount(account);
 
+            // generate token
             String token = jwtUtil.generateToken(user.getEmail(), user.getAccount().getAccountNumber());
+
+            String encodedToken = URLEncoder.encode(token, StandardCharsets.UTF_8);
+            String link = "http://localhost:8080/api/v1/users/verify?token=" + encodedToken;
+
+            // send verification email
+
+            Map<String, Object> emailData = Map.of(
+                    "name", user.getUsername(),
+                    "verificationLink", link);
+
+            emailService.sendHtmlMail(
+                    user.getEmail(),
+                    "Verify your BankingApi Account",
+                    "email-verification", // ← Template name
+                    emailData);
 
             Map<String, Object> response = new HashMap<>();
             response.put("user", savedUser);
-            response.put("message", "User Created successfully");
             response.put("token", token);
+            response.put("message", "User Created successfully, Please check your email to verify your account");
 
             return ResponseEntity
                     .status(201)
@@ -140,6 +163,10 @@ public class UserController {
             // compare new to old
             if (!passwordEncoder.matches(user.getPassword(), existingUser.getPassword())) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Incorrect password"));
+            }
+
+            if (!user.isVerified()) {
+                return ResponseEntity.status(403).body(Map.of("error", "Please verify your email before logging in"));
             }
 
             String token = jwtUtil.generateToken(user.getEmail(), user.getAccount().getAccountNumber());
@@ -239,4 +266,35 @@ public class UserController {
         return ResponseEntity.ok("User deleted successfully");
 
     }
+
+    @GetMapping("/verify")
+    public ResponseEntity<?> verifyUser(@RequestParam("token") String token) {
+        try {
+            // Decode token and extract email
+            String email = jwtUtil.extractEmail(token);
+
+            // Find the user
+            Optional<UserModel> optionalUser = userRepository.findByEmail(email);
+            if (optionalUser.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid token or user not found"));
+            }
+
+            UserModel user = optionalUser.get();
+
+            // Check if already verified
+            if (user.isVerified()) {
+                return ResponseEntity.ok(Map.of("message", "Account already verified"));
+            }
+
+            // Mark user as verified
+            user.setVerified(true);
+            userRepository.save(user);
+
+            return ResponseEntity.ok(Map.of("message", "Account verified successfully ✅"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("error", "Verification failed: " + e.getMessage()));
+        }
+    }
+
 }

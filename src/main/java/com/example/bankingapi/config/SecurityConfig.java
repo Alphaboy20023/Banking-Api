@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints — login & register should remain open
-                        .requestMatchers("/api/users/**").permitAll()
+                        .requestMatchers("/api/v1/users/**").permitAll()
                         // Everything under /api/accounts/** requires a valid JWT
                         .requestMatchers("/api/accounts/**").authenticated()
                         // All other routes (if any) also require auth

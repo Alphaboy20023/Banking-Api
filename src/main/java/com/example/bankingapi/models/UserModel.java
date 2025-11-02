@@ -32,22 +32,23 @@ public class UserModel {
     @Column
     private String username;
 
-   
-
+    
     public enum Role {
         ADMIN,
         SUPERUSER,
         USER
     }
-
+    
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
-
+    
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
+    
     @Column(nullable = false)
     private boolean isActive = true;
+    
+    private boolean isVerified = false;
 
     // Constructors
     public UserModel() {}
@@ -93,6 +94,10 @@ public class UserModel {
         return isActive;
     }
 
+    public boolean isVerified() {
+        return isVerified;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -125,6 +130,10 @@ public class UserModel {
         if (account != null && account.getUser() != this) {
             account.setUser(this);
         }
+    }
+
+    public void setVerified(boolean verified) {
+        isVerified = verified;
     }
 
 

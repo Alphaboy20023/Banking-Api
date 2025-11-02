@@ -12,7 +12,7 @@ import java.util.Map;
 @Component
 public class JwtUtil {
     private final Key key;
-    private final long EXPIRATION_TIME = 86400000;
+    private final long EXPIRATION_TIME = 86400000; // 1 day
 
     public JwtUtil(Dotenv dotenv) {
         String secretKey = dotenv.get("SECRET_KEY");

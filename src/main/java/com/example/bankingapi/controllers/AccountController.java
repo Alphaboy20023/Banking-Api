@@ -18,13 +18,14 @@ import com.example.bankingapi.dto.TransferRequest;
 import com.example.bankingapi.models.AccountModel;
 import com.example.bankingapi.models.UserModel;
 import com.example.bankingapi.models.AccountModel.AccountType;
+
 import com.example.bankingapi.services.AccountService;
 import com.example.bankingapi.services.CardService;
 
 import com.example.bankingapi.config.JwtUtil;
 
 @RestController
-@RequestMapping("/api/accounts")
+@RequestMapping("/api/v1/accounts")
 public class AccountController {
 
     @Autowired
@@ -126,12 +127,13 @@ public class AccountController {
                     request.getToAccountNumber(),
                     request.getAmount());
 
-            String userA = accountService.getUsernameByAccountNumber(request.getFromAccountNumber());
-            String userB = accountService.getUsernameByAccountNumber(request.getToAccountNumber());
+            String fromAccount = accountService.getUsernameByAccountNumber(request.getFromAccountNumber());
+            String toAccount = accountService.getUsernameByAccountNumber(request.getToAccountNumber());
 
-            String message = "Dear " + userA + ", your transfer of "
+
+            String message = "Dear " + fromAccount + ", your transfer of "
                     + request.getAmount() + " to account "
-                    + request.getToAccountNumber() + ", " + userB + " was successful.";
+                    + request.getToAccountNumber() + ", " + toAccount + " was successful.";
 
             return ResponseEntity.ok(message);
         } catch (RuntimeException e) {
@@ -149,17 +151,6 @@ public class AccountController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
-
-    // @PutMapping("/set-pin")
-    // public ResponseEntity<String> setPin(@RequestBody SetPinRequest request,
-    //         @RequestHeader("Authorization") String token) {
-    //     try {
-    //         accountService.setPin(request.getAccountNumber(), request.getPin());
-    //         return ResponseEntity.ok("PIN set successfully.");
-    //     } catch (RuntimeException e) {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-    //     }
-    // }
 
 }
 

@@ -28,6 +28,9 @@ public class TransactionModel {
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 
+    @Column(nullable = true, unique = true)
+    private String transactionId; // auto genrate after saving transaction
+
     @Column(nullable = false)
     private BigDecimal amount;
 
@@ -62,6 +65,7 @@ public class TransactionModel {
     public TransactionType getTransactionType() { return transactionType; }
     public BigDecimal getAmount() { return amount; }
     public LocalDateTime getTimestamp() { return createdAt; }
+    public String getTransactionId() { return transactionId; }
 
     // setters
     public void setFromAccount(AccountModel fromAccount) { this.fromAccount = fromAccount; }
@@ -69,5 +73,6 @@ public class TransactionModel {
     public void setTransactionType(TransactionType transactionType) { this.transactionType = transactionType; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public void setTimestamp(LocalDateTime timestamp) { this.createdAt = timestamp; }
+    public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
     
 }
