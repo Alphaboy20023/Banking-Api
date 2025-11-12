@@ -97,5 +97,6 @@ public class TransactionController {
 // Flag suspicious activity (too many transfers in short time).
 // send transaction alert to both users
 // Redis?
+
 // rate limiting
 // email service -  send transactions to both users
