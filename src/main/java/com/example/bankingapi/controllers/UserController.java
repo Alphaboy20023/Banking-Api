@@ -87,6 +87,7 @@ public class UserController {
 
             // encode password
             user.setPassword(passwordEncoder.encode(user.getPassword()));
+            user.setIsActive(true);
 
             // generate account Number
             AccountModel account = new AccountModel();
@@ -207,6 +208,11 @@ public class UserController {
     // get all
     @GetMapping
     public ResponseEntity<?> getAllUsers(Principal principal) {
+
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Authentication required"));
+        }
 
         UserModel currentUser = userRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));

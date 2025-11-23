@@ -32,6 +32,9 @@ public class UserModel {
     @Column
     private String username;
 
+    @Column(nullable = true, unique = true)
+    private String bankVerificationNumber;
+
     
     public enum Role {
         ADMIN,
@@ -46,7 +49,7 @@ public class UserModel {
     private LocalDateTime createdAt;
     
     @Column(nullable = false)
-    private boolean isActive = true;
+    private boolean isActive = false;
     
     private boolean isVerified = false;
 
@@ -104,6 +107,10 @@ public class UserModel {
 
     public AccountModel getAccount() { return account; }
 
+    public String getBankVerificationNumber() {
+        return bankVerificationNumber;
+    }
+
     // setters
     public void setEmail(String email) {
         this.email = email;
@@ -121,7 +128,7 @@ public class UserModel {
         this.role = role;
     }
 
-    public void setActive(boolean active) {
+    public void setIsActive(boolean active) {
         isActive = active;
     }
 
@@ -134,6 +141,10 @@ public class UserModel {
 
     public void setVerified(boolean verified) {
         isVerified = verified;
+    }
+
+    public void setBankVerificationNumber(String bankVerificationNumber) {
+        this.bankVerificationNumber = bankVerificationNumber;
     }
 
 

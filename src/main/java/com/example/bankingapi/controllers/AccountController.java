@@ -37,6 +37,7 @@ public class AccountController {
     @Autowired
     private CardService cardService;
 
+
     private final JwtUtil jwtUtil;
     private final AccountRepository accountRepository;
 
@@ -130,7 +131,6 @@ public class AccountController {
             String fromAccount = accountService.getUsernameByAccountNumber(request.getFromAccountNumber());
             String toAccount = accountService.getUsernameByAccountNumber(request.getToAccountNumber());
 
-
             String message = "Dear " + fromAccount + ", your transfer of "
                     + request.getAmount() + " to account "
                     + request.getToAccountNumber() + ", " + toAccount + " was successful.";
@@ -152,6 +152,25 @@ public class AccountController {
         }
     }
 
+    @GetMapping("/bvn")
+    public ResponseEntity<?> getBankVerificationNumber(
+            @RequestHeader("Authorization") String token,
+            @RequestParam String accountNumber) {
+        try {
+            String email = jwtUtil.extractEmail(token.replace("Bearer ", ""));
+            String bvn = accountService.createBankVerificationNumber(email, accountNumber);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "bankVerificationNumber", bvn,
+                    "message", "BVN generated successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()));
+        }
+    }
+
 }
 
 // to test api/accounts/transfer, use payload:
@@ -162,3 +181,5 @@ public class AccountController {
 // "amount":"800"
 // }
 
+// kyc
+//

@@ -109,7 +109,7 @@ Response Examples
 
 ## API Endpoints
 
-### api/users/\*\* - controls all users CRUD activities.
+### api/v1/users/\*\* - controls all users CRUD activities.
 
 ### api/accounts/\*\* - controls all users account CRUD activities,.
 

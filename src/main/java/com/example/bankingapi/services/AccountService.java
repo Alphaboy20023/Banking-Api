@@ -19,11 +19,15 @@ import org.springframework.web.server.ResponseStatusException;
 import com.example.bankingapi.Repositories.AccountRepository;
 import com.example.bankingapi.Repositories.CardRepository;
 import com.example.bankingapi.Repositories.TransactionRepository;
+import com.example.bankingapi.Repositories.UserRepository;
 
 import com.example.bankingapi.models.AccountModel;
 import com.example.bankingapi.models.CardModel;
 import com.example.bankingapi.models.TransactionModel;
+import com.example.bankingapi.models.UserModel;
+
 import com.example.bankingapi.services.EmailService;
+import com.example.bankingapi.services.UserService;
 
 // ALL ACCOUNT CRUD
 @Service
@@ -36,14 +40,19 @@ public class AccountService {
     private CardRepository cardRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private TransactionService transactionService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private TransactionRepository transactionRepository;
@@ -81,12 +90,16 @@ public class AccountService {
     }
 
     // Withdraw logic
-    public AccountModel withdraw(String accountNumber, BigDecimal amount) {
+    public AccountModel withdraw(String accountNumber, BigDecimal amount, String pin) {
         AccountModel account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
         if (account.getBalance().compareTo(amount) < 0) {
             throw new RuntimeException("Insufficient balance");
+        }
+
+        if (account.getPin() == null || !account.getPin().equals(pin)) {
+            throw new RuntimeException("Invalid pin");
         }
 
         account.setBalance(account.getBalance().subtract(amount));
@@ -225,6 +238,27 @@ public class AccountService {
         return account.getUser().getUsername();
     }
 
-    
+    public String createBankVerificationNumber(String email, String accountNumber) {
+        AccountModel account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new RuntimeException("Account does not exist"));
+
+        UserModel user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User does not exist"));
+
+        if (account.getUser().getId() != user.getId()) {
+            throw new RuntimeException("Account does not belong to this user");
+        }
+
+        if (user.getBankVerificationNumber() != null && !user.getBankVerificationNumber().isEmpty()) {
+            throw new RuntimeException("User already has a BVN");
+        }
+
+        String bvn = userService.generateBankVerificationNumber();
+
+        user.setBankVerificationNumber(bvn);
+        userRepository.save(user);
+
+        return bvn;
+    }
 
 }

@@ -36,7 +36,7 @@ public class AccountModel {
     private BigDecimal balance;
 
     @Column(nullable = true, precision = 19, scale = 2)
-    // precision here is saying the max aamount of money, i.e the standard, up to 19
+    // precision here is saying the max amount of money, i.e the standard, up to 19
     // digits,
     // scale means decimal after, i.e 2
     @PositiveOrZero
