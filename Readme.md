@@ -1,7 +1,7 @@
 ## BANKING API
 
 <details>
-<summary><b>📘 Table of Contents</b></summary>
+<summary><b>Table of Contents</b></summary>
 
 - [Overview](#overview)
 - [Features](#Key-features)
@@ -69,8 +69,8 @@ Every request made to sensitive endpoints—such as account management, fund tra
 The system enforces role-based authorization, distinguishing between regular users and administrators to maintain data privacy and operational integrity.
 
 Authentication Flow
-- A new user registers via POST /api/users.
-- The user logs in using POST /api/users/login, providing valid credentials.
+- A new user registers via POST `/api/v1/users`.
+- The user logs in using POST `/api/v1/users/login`, providing valid credentials.
 - Upon successful authentication, the server issues a JWT token signed with a secret key.
 - This token must accompany all subsequent requests in the Authorization header.
 
@@ -111,15 +111,15 @@ Response Examples
 
 ### api/v1/users/\*\* - controls all users CRUD activities.
 
-### api/accounts/\*\* - controls all users account CRUD activities,.
+### api/v1/accounts/\*\* - controls all users account CRUD activities,.
 
-### api/transactions/\*\* - controls all users transaction CRUD activities,.
+### api/v1/transactions/\*\* - controls all users transaction CRUD activities,.
 
-### api/cards/\*\* - controls all users account card CRUD activities.
+### api/v1/cards/\*\* - controls all users account card CRUD activities.
 
 ## -- FOR USERS --
 
-`POST - /api/users`
+`POST - /api/v1/users`
 
 Allows new users to create an account by providing valid credentials. Supports optional role assignment during registration, also auto creates user account.
 
@@ -134,7 +134,7 @@ Responses:
 → 201 CREATED — User successfully created.
 → 400 BAD REQUEST — Invalid input fields.
 
-`POST - /api/users/login`
+`POST - /api/v1/users/login`
 Authenticates an existing user and returns a JWT token for secure access to protected routes.
 
 Example Payload:
@@ -147,7 +147,7 @@ Responses:
 → 200 OK — User logged in successfully.
 → 400 BAD REQUEST — Invalid input fields.
 
-`GET - /api/users/email/{email}`
+`GET - /api/v1/users/email/{email}`
 Fetches a user’s details by their registered email address.
 Access is restricted to authenticated users.
 Returns user information such as ID, username, email, role, and account status.
@@ -156,7 +156,7 @@ Example Response:
 → 200 OK — Returns the user object if found.
 → 404 NOT FOUND — If no user exists with the given email.
 
-`GET - /api/users/{id}`
+`GET - /api/v1/users/{id}`
 Retrieves a specific user’s information using their unique ID.
 Only accessible by admins or the user themselves.
 
@@ -165,7 +165,7 @@ Example Response:
 → 403 FORBIDDEN — If a non-admin tries to access another user’s record.
 → 404 NOT FOUND — If user ID does not exist.
 
-`PUT - /api/users/{id}`
+`PUT - /api/v1/users/{id}`
 Updates user details (e.g., username, email, or password).
 Admin can update any user; normal users can only update their own accounts.
 
@@ -182,7 +182,7 @@ Responses:
 → 400 BAD REQUEST — Invalid input fields.
 → 403 FORBIDDEN — Unauthorized update attempt.
 
-`GET – /api/users`
+`GET – /api/v1/users`
 Retrieves all registered users.
 Only accessible by admin accounts.
 
@@ -190,7 +190,7 @@ Response:
 → 200 OK — Returns an array of all users.
 → 403 FORBIDDEN — Access denied for non-admin users.
 
-`DELETE - /api/users/{id}`
+`DELETE - /api/v1/users/{id}`
 Deletes a user account permanently from the system.
 Action restricted to admins.
 
@@ -201,7 +201,7 @@ Responses:
 
 ## -- FOR ACCOUNT --
 
-`POST - /api/accounts/create/{userId}`
+`POST - /api/v1/create/{userId}`
 Creates a new account for a specific user.
 Although an account is automatically generated upon user registration, this endpoint allows manual creation for advanced scenarios or two-factor (2FA) account setups.
 
@@ -211,7 +211,7 @@ Example Response:
 → 400 BAD REQUEST — Account already exists or invalid data provided.
 → 401 UNAUTHORIZED — user is not authenticated ( missing jw token ).
 
-`POST - /api/accounts/deposit`
+`POST - /api/v1/accounts/deposit`
 Allows a user to deposit funds into their account.
 The user must be authenticated, and the account must be active before performing any deposit operations.
 
@@ -227,7 +227,7 @@ Responses:
 → 404 NOT FOUND — Account not found.
 → 401 UNAUTHORIZED — user is not authenticated ( missing jw token ).
 
-`POST - /api/accounts/withdraw`
+`POST - /api/v1/accounts/withdraw`
 Processes a withdrawal transaction from a user’s account.
 This endpoint integrates with the withdrawWithCard service logic to handle card-based withdrawals securely.
 
@@ -247,7 +247,7 @@ Responses:
 → 404 NOT FOUND — Account or card not found.
 → 401 UNAUTHORIZED — user is not authenticated ( missing jw token ).
 
-`POST - /api/accounts/transfer`
+`POST - /api/v1/accounts/transfer`
 Enables users to transfer funds between accounts.
 Transfers are validated for sufficient balance, and both sender and receiver accounts must be active.
 
@@ -266,7 +266,7 @@ Responses:
 → 401 UNAUTHORIZED — user is not authenticated ( missing jw token ).
 
 
-`PUT/POST - /api/accounts/set-pin`
+`PUT/POST - /api/v1/accounts/set-pin`
 Allows a user to set or update their account transaction PIN.
 The PIN is used for additional verification during withdrawals and transfers.
 
@@ -283,7 +283,7 @@ Responses:
 → 401 UNAUTHORIZED — user is not authenticated ( missing jw token ).
 
 ## -- FOR TRANSACTIONS --
-`GET - /api/transactions/`
+`GET - /api/v1/transactions/`
 Retrieves all transactions in the system.
 This route is available for all users.
 If no transactions exist, an empty list is returned with a message indicating “No transactions yet.”
@@ -295,7 +295,7 @@ Example Response:
 → 401 UNAUTHORIZED — user is not authenticated ( missing jw token ).
 
 
-`GET - /api/transactions/all`
+`GET - /api/v1/transactions/all`
 Retrieves all transactions in the system.
 This route is restricted to users with the ADMIN role.
 If no transactions exist, an empty list is returned with a message indicating “No transactions yet.”
@@ -306,7 +306,7 @@ Example Response:
 → 404 NOT FOUND — If user authentication fails.
 → 401 UNAUTHORIZED — user is not authenticated ( missing jw token ).
 
-`GET - /api/transactions/{id}`
+`GET - /api/v1/transactions/{id}`
 Fetches a specific transaction by its unique ID.
 This endpoint provides complete details of a single transaction, including fromAccount, toAccount, amount, and timestamp.
 
@@ -316,7 +316,7 @@ Example Response:
 → 401 UNAUTHORIZED — user is not authenticated ( missing jw token ).
 
 ## -- FOR CARDS --
-`GET - /api/cards/card-info/{id}`
+`GET - /api/v1/cards/card-info/{id}`
 Fetches detailed card information for a specific user by their ID.
 Only accessible to authenticated users.
 
@@ -334,7 +334,7 @@ Responses:
 → 500 INTERNAL SERVER ERROR — Unexpected error while fetching card info.
 → 401 UNAUTHORIZED — user is not authenticated ( missing jw token ).
 
-`GET - /api/cards/all-cards`
+`GET - /api/v1/cards/all-cards`
 Retrieves all issued cards in the system.
 This route is restricted to Admin users only.
 
@@ -361,7 +361,7 @@ Responses:
 → 401 UNAUTHORIZED — Missing or invalid token.
 → 403 FORBIDDEN — Access denied (non-admin user).
 
-`DELETE - /api/cards/{cardId}`
+`DELETE - /api/v1/cards/{cardId}`
 Deletes a card permanently from the system.
 Only Admins can perform this action.
 
@@ -381,14 +381,14 @@ Responses:
 
 ## API Usage Instructions
 The BankingAPI exposes a RESTful interface for secure and efficient interaction between clients and the server.
-`api/accounts`, `api/transactions` and `api/cards` are protected based on user roles and authentication state, while `api/users` endpoint does not require a token — it validates the user’s credentials and returns a simulated login response.
+`api/v1/accounts`, `api/v1/transactions` and `api/v1/cards` are protected based on user roles and authentication state, while `api/v1/users` endpoint does not require a token — it validates the user’s credentials and returns a simulated login response.
 
 # Testing with Postman
 - Open Postman and set the base URL to http://localhost:8080.
-- Create a POST request for /api/users/login.
+- Create a POST request for `/api/v1/users/login`.
 - Copy the JWT token from the response.
 - Under the “Authorization” tab, select Bearer Token and paste the token.
-- Test other secured endpoints like /api/accounts/transfer or /api/users/email/{email}.
+- Test other secured endpoints like `/api/v1/accounts/transfer` or `/api/v1/users/email/{email}.`
 
 
 Developed by Victor — Software Engineer
