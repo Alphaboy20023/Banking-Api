@@ -19,6 +19,7 @@
 BankingAPI is a robust and scalable backend application designed to simulate the core functionalities of a modern banking system. It provides a secure and efficient platform for handling user authentication, account creation, fund transfers, and transaction history management. Built with a focus on security, modularity, and performance, BankingAPI demonstrates the application of RESTful API principles, JWT-based authentication, and data integrity enforcement through validation and structured domain models.
 
 This project is ideal for showcasing enterprise-grade backend development practices, including layered architecture, dependency injection, and token-based session management — all within a clean and extensible Spring Boot framework.
+This API sends email notifications for account verification and transaction confirmations using HTML email Templates
 
 ## KEY FEATURES:
 
