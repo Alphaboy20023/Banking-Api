@@ -31,7 +31,7 @@ public class AccountModel {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String pin;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 19, scale = 2)
     @PositiveOrZero
     private BigDecimal balance;
 

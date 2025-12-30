@@ -22,10 +22,15 @@ import com.example.bankingapi.models.AccountModel.AccountType;
 import com.example.bankingapi.services.AccountService;
 import com.example.bankingapi.services.CardService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.example.bankingapi.config.JwtUtil;
 
+@Tag(name = "2. Accounts")
 @RestController
 @RequestMapping("/api/v1/accounts")
+@SecurityRequirement(name = "Bearer Authentication")
 public class AccountController {
 
     @Autowired

@@ -17,8 +17,14 @@ import com.example.bankingapi.models.TransactionModel;
 import com.example.bankingapi.Repositories.UserRepository;
 import com.example.bankingapi.models.UserModel;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+
+@Tag(name = "4. Transactions")
 @RestController
 @RequestMapping("/api/v1/transactions")
+@SecurityRequirement(name = "Bearer Authentication")
 public class TransactionController {
 
     @Autowired

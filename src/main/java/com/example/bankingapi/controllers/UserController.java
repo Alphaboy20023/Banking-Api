@@ -26,6 +26,7 @@ import com.example.bankingapi.services.AccountService;
 import com.example.bankingapi.services.CardService;
 import com.example.bankingapi.services.EmailService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 // import com.example.BankingApi.Repositories.AccountRepository;
@@ -41,6 +42,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+
+
+@Tag(name = "1. Users")
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserController {
@@ -67,7 +72,8 @@ public class UserController {
     private EmailService emailService;
 
     @PostMapping
-    public ResponseEntity<?> createUser(@RequestBody @Valid UserModel user) {
+    // register
+    public ResponseEntity<?>Register(@RequestBody @Valid UserModel user) {
         try {
             if (user.getRole() == null) {
                 user.setRole(UserModel.Role.USER);

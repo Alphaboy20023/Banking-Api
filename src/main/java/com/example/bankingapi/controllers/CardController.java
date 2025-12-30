@@ -8,6 +8,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.example.bankingapi.models.CardModel;
 import com.example.bankingapi.models.UserModel;
+
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import com.example.bankingapi.Repositories.CardRepository;
 import com.example.bankingapi.Repositories.UserRepository;
 
@@ -16,8 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+
+@Tag(name = "3. Cards")
 @RestController
 @RequestMapping("/api/v1/cards")
+@SecurityRequirement(name = "Bearer Authentication")
 public class CardController {
 
     @Autowired

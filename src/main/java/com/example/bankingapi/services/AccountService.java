@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.text.NumberFormat;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,6 +30,8 @@ import com.example.bankingapi.models.UserModel;
 
 import com.example.bankingapi.services.EmailService;
 import com.example.bankingapi.services.UserService;
+
+import jakarta.transaction.Transactional;
 
 // ALL ACCOUNT CRUD
 @Service
@@ -78,6 +82,7 @@ public class AccountService {
     }
 
     // Deposit
+    @Transactional
     public AccountModel deposit(String accountNumber, BigDecimal amount) {
         AccountModel account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
@@ -90,6 +95,7 @@ public class AccountService {
     }
 
     // Withdraw logic
+    @Transactional
     public AccountModel withdraw(String accountNumber, BigDecimal amount, String pin) {
         AccountModel account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
@@ -98,8 +104,8 @@ public class AccountService {
             throw new RuntimeException("Insufficient balance");
         }
 
-        if (account.getPin() == null || !account.getPin().equals(pin)) {
-            throw new RuntimeException("Invalid pin");
+        if (!passwordEncoder.matches(pin, account.getPin())) {
+            throw new RuntimeException("Invalid PIN");
         }
 
         account.setBalance(account.getBalance().subtract(amount));
@@ -110,6 +116,7 @@ public class AccountService {
     }
 
     // Transfer logic
+    @Transactional
     public void transfer(String fromAccountNumber, String toAccountNumber, BigDecimal amount) {
         if (fromAccountNumber.equals(toAccountNumber)) {
             throw new RuntimeException("Cannot transfer to the same account");
@@ -151,55 +158,7 @@ public class AccountService {
         accountRepository.save(toAccount);
 
         TransactionModel transaction = transactionService.recordTransfer(fromAccount, toAccount, amount);
-        String transactionId = transaction.getTransactionId();
-
-        // format i.e 2000 -> 2,000
-        NumberFormat nf = NumberFormat.getNumberInstance(new Locale("en", "NG"));
-        nf.setMinimumFractionDigits(2);
-        nf.setMaximumFractionDigits(2);
-
-        String formattedAmount = nf.format(amount);
-        String formattedSenderBalance = nf.format(fromAccount.getBalance());
-        String formattedReceiverBalance = nf.format(toAccount.getBalance());
-
-        try {
-            // Sender email
-            Map<String, Object> senderData = Map.of(
-                    "name", fromAccount.getUser().getUsername(),
-                    "transactionType", "sent",
-                    "direction", "from",
-                    "amount", formattedAmount,
-                    // "role","sender",
-                    "transactionId", transactionId,
-                    "date", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                    "balance", formattedSenderBalance);
-
-            emailService.sendHtmlMail(
-                    fromAccount.getUser().getEmail(),
-                    "Debit Alert - ₦" + formattedAmount,
-                    "transaction-success",
-                    senderData);
-
-            // Receiver email
-            Map<String, Object> receiverData = Map.of(
-                    "name", toAccount.getUser().getUsername(),
-                    "transactionType", "received",
-                    "direction", "into",
-                    "amount", formattedAmount,
-                    "role", "Sender",
-                    "getSenderName", fromAccount.getUser().getUsername(),
-                    "transactionId", transactionId,
-                    "date", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                    "balance", formattedReceiverBalance);
-
-            emailService.sendHtmlMail(
-                    toAccount.getUser().getEmail(),
-                    "Credit Alert - ₦" + formattedAmount,
-                    "transaction-success",
-                    receiverData);
-        } catch (Exception e) {
-            System.err.println("Transaction completed, but email failed: " + e.getMessage());
-        }
+        emailService.sendTransferAlerts(fromAccount, toAccount, amount, transaction.getTransactionId());
 
     }
 

@@ -18,30 +18,35 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtFilter jwtFilter;
-    private final CustomAccessDeniedHandler accessDeniedHandler;
-    private final CustomAuthEntryPointHandler authEntryPointHandler;
+        private final JwtFilter jwtFilter;
+        private final CustomAccessDeniedHandler accessDeniedHandler;
+        private final CustomAuthEntryPointHandler authEntryPointHandler;
 
-    public SecurityConfig(JwtFilter jwtFilter,CustomAccessDeniedHandler accessDeniedHandler,
-                          CustomAuthEntryPointHandler authEntryPointHandler) {
-        this.jwtFilter = jwtFilter;
-        this.accessDeniedHandler = accessDeniedHandler;
-        this.authEntryPointHandler = authEntryPointHandler;
-    }
+        public SecurityConfig(JwtFilter jwtFilter, CustomAccessDeniedHandler accessDeniedHandler,
+                        CustomAuthEntryPointHandler authEntryPointHandler) {
+                this.jwtFilter = jwtFilter;
+                this.accessDeniedHandler = accessDeniedHandler;
+                this.authEntryPointHandler = authEntryPointHandler;
+        }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 
-    // Configure protected routes
+        // Configure protected routes
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints — login & register should remain open
-                        .requestMatchers("/api/v1/users/**").permitAll()
+                        .requestMatchers(
+                                "/api/v1/users/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         // Everything under /api/accounts/** requires a valid JWT
                         .requestMatchers("/api/accounts/**").authenticated()
                         // All other routes (if any) also require auth

@@ -395,3 +395,7 @@ The BankingAPI exposes a RESTful interface for secure and efficient interaction 
 Developed by Victor — Software Engineer
 📧 Email: <a href="timivictor565@gmail.com">timivictor565@gmail.com</a>
 🔗 GitHub: github.com/alphaboy20023
+
+
+
+<!-- I implemented @Transactional in my Banking API to ensure ACID compliance. I wrote integration tests to verify that if a transfer fails halfway through (for example, if the network drops), the system rolls back the database state so that the sender doesn't lose money and the receiver doesn't get 'ghost' funds -->
