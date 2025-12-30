@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Configuration;
 public class EnvConfig {
     @Bean
     public Dotenv dotenv() {
-        return Dotenv.load();
+        return Dotenv.configure()
+                .directory("./")
+                .ignoreIfMissing() 
+                .load();
     }
 }
