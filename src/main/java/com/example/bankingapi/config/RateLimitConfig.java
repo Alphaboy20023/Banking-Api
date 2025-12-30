@@ -16,6 +16,7 @@ public class RateLimitConfig implements WebMvcConfigurer {
     public RateLimiter rateLimiter() {
         return new RateLimiter(5, 60);
     }
+    // yes
 
     @Bean
     // creates RateLimitInterceptor that checks requests using the RateLimiter bean 
